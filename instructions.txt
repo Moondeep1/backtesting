@@ -1,0 +1,216 @@
+================================================================================
+SPY DAY TRADING BACKTEST TOOL - COMPLETE SETUP & USAGE GUIDE
+================================================================================
+
+STEP 1: GET YOUR FREE API KEY (5 MINUTES)
+================================================================================
+
+1. Go to: https://polygon.io/
+2. Click "Sign Up" button (top right)
+3. Enter email and password
+4. Check your email and click the verification link
+5. Log in to your account
+6. Click "Dashboard" → "API Keys"
+7. Copy your "REST API Key" (looks like: kFOG0Gl6TUrhzWX1NKMekuNeKfXJ0KBL)
+8. SAVE THIS KEY - you'll need it to run the backtest
+
+
+STEP 2: INSTALL PYTHON
+================================================================================
+
+If you don't have Python installed:
+
+1. Go to: https://www.python.org/downloads/
+2. Download Python 3.8 or higher
+3. Run the installer
+4. CHECK THE BOX: "Add Python to PATH"
+5. Click "Install Now"
+6. Wait for installation to complete
+
+To verify Python is installed, open terminal/command prompt and type:
+    python --version
+
+
+STEP 3: INSTALL REQUIRED LIBRARY
+================================================================================
+
+Open terminal/command prompt and run:
+
+    pip install requests
+
+Wait for it to complete. You should see "Successfully installed requests"
+
+
+STEP 4: RUN THE BACKTEST - BASIC COMMAND
+================================================================================
+
+IMPORTANT: Replace YOUR_API_KEY with your actual API key from Step 1
+
+    python spy_testing.py --api-key YOUR_API_KEY
+
+Example:
+    python spy_testing.py --api-key kFOG0Gl6TUrhzWX1NKMekuNeKfXJ0KBL
+
+
+STEP 5: ADVANCED OPTIONS (OPTIONAL)
+================================================================================
+
+Use different starting capital (default is $50,000):
+    python spy_testing.py --api-key YOUR_KEY --capital 100000
+
+Use different target gain in dollars (default is $2):
+    python spy_testing.py --api-key YOUR_KEY --target-gain 3.0
+
+Use different date range:
+    python spy_testing.py --api-key YOUR_KEY --start-date 2023-01-01 --end-date 2024-01-01
+
+Export results to JSON file:
+    python spy_testing.py --api-key YOUR_KEY --export
+
+Combine multiple options:
+    python spy_testing.py --api-key YOUR_KEY --capital 100000 --target-gain 3.0 --export
+
+
+STEP 6: UNDERSTAND THE OUTPUT
+================================================================================
+
+When you run the command, you'll see results like:
+
+    ============================================================
+    SPY DAY TRADING BACKTEST RESULTS
+    ============================================================
+    Capital Per Trade: $50,000.00
+    Target Gain: $2.00
+    Date Range: 2024-06-01 to 2026-06-01
+    ============================================================
+    Completed Trades: 284
+    Total Profit: $56,800.00
+    Average Profit Per Trade: $200.00
+    Average Holding Period: 1.2 days
+    Winning Trades: 284
+    Losing Trades: 0
+    Win Rate: 100.00%
+    Days Holding Without Profit: 212
+    ============================================================
+
+MEANING:
+- Completed Trades: How many buy/sell cycles finished
+- Total Profit: Total money made from all trades
+- Average Profit Per Trade: Total profit ÷ number of trades
+- Average Holding Period: How long you held stock on average
+- Winning Trades: Trades that hit the $2 target
+- Win Rate: Percentage of successful trades
+
+
+ALL COMMAND OPTIONS
+================================================================================
+
+--api-key          REQUIRED. Your Polygon.io API key
+--capital          Optional. Money per trade. Default: 50000
+--target-gain      Optional. Target gain in dollars. Default: 2.0
+--start-date       Optional. Start date YYYY-MM-DD. Default: 2024-06-01
+--end-date         Optional. End date YYYY-MM-DD. Default: 2026-06-01
+--export           Optional. Save results to JSON file
+
+
+COMMON ERRORS & FIXES
+================================================================================
+
+ERROR: "Command not found: python"
+FIX: Python is not installed or not in PATH
+    - Reinstall Python and CHECK "Add Python to PATH"
+    - Try using "python3" instead of "python"
+
+ERROR: "No module named 'requests'"
+FIX: Requests library not installed
+    - Run: pip install requests
+
+ERROR: "HTTP Status: 401" or "Invalid API Key"
+FIX: Your API key is wrong
+    - Go to: https://polygon.io/dashboard/api-keys
+    - Generate a new REST API Key
+    - Copy it correctly (no extra spaces)
+
+ERROR: "repository not found"
+FIX: Date range doesn't have data or API is down
+    - Try different dates
+    - Check internet connection
+
+
+FILES CREATED
+================================================================================
+
+spy_testing.py              - The main backtest program
+backtest_cache.db           - Database with downloaded prices (auto-created)
+backtest_results.json       - Results export (created when using --export)
+
+
+WHAT THE PROGRAM DOES
+================================================================================
+
+1. Downloads real historical SPY prices from Polygon.io
+2. Simulates day trading:
+   - Buy at market open price
+   - Sell when price rises by your target (default $2)
+   - Repeat each day
+3. Tracks all trades and calculates statistics
+4. Shows results in terminal
+5. Optionally exports to JSON for further analysis
+
+
+QUICK START EXAMPLES
+================================================================================
+
+Just run with defaults:
+    python spy_testing.py --api-key YOUR_KEY
+
+Test with $100,000 capital:
+    python spy_testing.py --api-key YOUR_KEY --capital 100000
+
+Test with $3 target gain:
+    python spy_testing.py --api-key YOUR_KEY --target-gain 3.0
+
+Test specific year (2023):
+    python spy_testing.py --api-key YOUR_KEY --start-date 2023-01-01 --end-date 2023-12-31
+
+Save results to file:
+    python spy_testing.py --api-key YOUR_KEY --export
+
+
+SHARE WITH OTHERS
+================================================================================
+
+To share with a friend or colleague:
+
+1. Share the file "spy_testing.py"
+2. Share this file "INSTRUCTIONS.txt"
+3. Tell them:
+   - Get free API key from polygon.io (Step 1)
+   - Install Python if needed (Step 2)
+   - Run: pip install requests (Step 3)
+   - Run: python spy_testing.py --api-key YOUR_KEY (Step 4)
+
+
+TROUBLESHOOTING
+================================================================================
+
+If something doesn't work:
+
+1. Make sure you have Python 3.8+
+2. Make sure requests library is installed (pip install requests)
+3. Make sure API key is correct (copy from polygon.io dashboard)
+4. Make sure you have internet connection
+5. Try using "python3" instead of "python"
+6. Check that there's no extra space in your API key
+
+
+QUESTIONS?
+================================================================================
+
+- API Key Help: https://polygon.io/dashboard/api-keys
+- Python Help: https://python.org/
+- Polygon.io API Docs: https://polygon.io/docs
+
+Have fun backtesting!
+
+================================================================================
