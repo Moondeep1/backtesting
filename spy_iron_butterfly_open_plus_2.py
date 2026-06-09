@@ -1,3 +1,35 @@
+"""
+SPY IRON BUTTERFLY BACKTEST TOOL
+
+This script backtests an Iron Butterfly options strategy on SPY (S&P 500 ETF).
+
+STRATEGY:
+- Each trading day, create a synthetic Iron Butterfly centered at: OPEN + X (user input)
+- Put Wing: Center Strike - $5
+- Call Wing: Center Strike + $5
+- Credit received per contract: $3.00 (max profit = $300)
+- Max loss: $200
+
+PROFIT/LOSS CALCULATION:
+- If SPY closes within $3 of center strike: Profit = (3 - distance) × 100
+- If SPY closes $4 away: Loss = $100
+- If SPY closes $5+ away: Max Loss = $200
+
+INPUT PARAMETERS:
+1. Center Offset (X): How far from open price to set center strike (e.g., 2 for OPEN + $2)
+2. Starting Capital: Your initial trading capital
+
+OUTPUT:
+- Trading statistics (win rate, total profit, best/worst days, streaks)
+- Capital analysis (starting, ending, percentage return)
+- Capital depletion warning if applicable
+- CSV file with all daily trades
+- First 20 and last 20 trading days with capital tracking
+
+DATA SOURCE:
+- Fetches real historical SPY data from Polygon.io API
+- Date range: 2024-06-01 to 2026-06-01 (2 years of trading)
+"""
 import requests
 from datetime import datetime
 import csv
