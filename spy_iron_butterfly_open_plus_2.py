@@ -6,16 +6,17 @@ print("SPY IRON BUTTERFLY BACKTEST")
 print("="*60)
 
 API_KEY = "kFOG0Gl6TUrhzWX1NKMekuNeKfXJ0KBL"
-STARTING_CAPITAL = 50000
 START_DATE = "2024-06-01"
 END_DATE = "2026-06-01"
 
-# Get user input - ONLY ask for center offset
+# Get user input
 print("\nEnter backtest parameters:")
 center_offset = float(input("Center Strike Offset (e.g., 2 for OPEN + $2): "))
+starting_capital = float(input("Starting Capital ($): "))
 
 print(f"\nBacktest Settings:")
 print(f"Center Strike: OPEN + ${center_offset:.2f}")
+print(f"Starting Capital: ${starting_capital:,.2f}")
 print(f"Date Range: {START_DATE} to {END_DATE}")
 print("="*60)
 
@@ -40,6 +41,9 @@ daily_pnl = []
 winning_days = 0
 losing_days = 0
 total_profit = 0
+current_capital = starting_capital
+capital_depleted_date = None
+capital_depleted = False
 
 # Process each day
 for row in rows:
@@ -58,6 +62,14 @@ for row in rows:
     else:  # distance >= 5
         profit_loss = -200
     
+    # Update capital
+    current_capital += profit_loss
+    
+    # Track if capital goes to zero or below
+    if current_capital <= 0 and not capital_depleted:
+        capital_depleted_date = date
+        capital_depleted = True
+    
     # Track statistics
     if profit_loss > 0:
         winning_days += 1
@@ -73,7 +85,8 @@ for row in rows:
         'close': close_price,
         'center_strike': center_strike,
         'distance': distance,
-        'profit_loss': profit_loss
+        'profit_loss': profit_loss,
+        'capital': current_capital
     })
 
 # Calculate streaks
@@ -102,16 +115,16 @@ win_rate = (winning_days / total_days * 100) if total_days > 0 else 0
 avg_profit = total_profit / total_days if total_days > 0 else 0
 best_day = max(daily_pnl) if daily_pnl else 0
 worst_day = min(daily_pnl) if daily_pnl else 0
-ending_capital = STARTING_CAPITAL + total_profit
-percentage_return = (total_profit / STARTING_CAPITAL * 100) if STARTING_CAPITAL > 0 else 0
+ending_capital = starting_capital + total_profit
+percentage_return = (total_profit / starting_capital * 100) if starting_capital > 0 else 0
 
 # Export to CSV
 csv_filename = f"spy_iron_butterfly_open_plus_{center_offset}_results.csv"
 with open(csv_filename, 'w', newline='') as f:
     writer = csv.writer(f)
-    writer.writerow(['date', 'open', 'close', 'center_strike', 'distance', 'profit_loss'])
+    writer.writerow(['date', 'open', 'close', 'center_strike', 'distance', 'profit_loss', 'capital'])
     for row in results:
-        writer.writerow([row['date'], row['open'], row['close'], row['center_strike'], row['distance'], row['profit_loss']])
+        writer.writerow([row['date'], row['open'], row['close'], row['center_strike'], row['distance'], row['profit_loss'], row['capital']])
 
 # Print summary statistics
 print("\n" + "="*60)
@@ -133,9 +146,14 @@ print("="*60)
 print("\n" + "="*60)
 print("CAPITAL ANALYSIS")
 print("="*60)
-print(f"Starting Capital: ${STARTING_CAPITAL:,.2f}")
+print(f"Starting Capital: ${starting_capital:,.2f}")
 print(f"Ending Capital: ${ending_capital:,.2f}")
 print(f"Percentage Return: {percentage_return:.2f}%")
+
+if capital_depleted:
+    print(f"\n⚠️  CAPITAL DEPLETED on: {capital_depleted_date}")
+else:
+    print(f"\n✅ Capital never depleted")
 print("="*60)
 
 # Print first 20 trades
@@ -143,7 +161,7 @@ print("\n" + "="*60)
 print("FIRST 20 TRADING DAYS")
 print("="*60)
 for i, row in enumerate(results[:20], 1):
-    print(f"{i}. {row['date']} | Open: ${row['open']:.2f} | Close: ${row['close']:.2f} | Center: ${row['center_strike']:.2f} | Distance: {row['distance']:.2f} | P&L: ${row['profit_loss']:.2f}")
+    print(f"{i}. {row['date']} | Open: ${row['open']:.2f} | Close: ${row['close']:.2f} | Center: ${row['center_strike']:.2f} | Distance: {row['distance']:.2f} | P&L: ${row['profit_loss']:.2f} | Capital: ${row['capital']:,.2f}")
 
 # Print last 20 trades
 print("\n" + "="*60)
@@ -151,7 +169,7 @@ print("LAST 20 TRADING DAYS")
 print("="*60)
 start_idx = max(0, len(results) - 20)
 for i, row in enumerate(results[start_idx:], start_idx + 1):
-    print(f"{i}. {row['date']} | Open: ${row['open']:.2f} | Close: ${row['close']:.2f} | Center: ${row['center_strike']:.2f} | Distance: {row['distance']:.2f} | P&L: ${row['profit_loss']:.2f}")
+    print(f"{i}. {row['date']} | Open: ${row['open']:.2f} | Close: ${row['close']:.2f} | Center: ${row['center_strike']:.2f} | Distance: {row['distance']:.2f} | P&L: ${row['profit_loss']:.2f} | Capital: ${row['capital']:,.2f}")
 
 print("\n" + "="*60)
 print(f"Results exported to: {csv_filename}")
