@@ -1,35 +1,3 @@
-"""
-SPY IRON BUTTERFLY BACKTEST TOOL
-
-This script backtests an Iron Butterfly options strategy on SPY (S&P 500 ETF).
-
-STRATEGY:
-- Each trading day, create a synthetic Iron Butterfly centered at: OPEN + X (user input)
-- Put Wing: Center Strike - $5
-- Call Wing: Center Strike + $5
-- Credit received per contract: $3.00 (max profit = $300)
-- Max loss: $200
-
-PROFIT/LOSS CALCULATION:
-- If SPY closes within $3 of center strike: Profit = (3 - distance) × 100
-- If SPY closes $4 away: Loss = $100
-- If SPY closes $5+ away: Max Loss = $200
-
-INPUT PARAMETERS:
-1. Center Offset (X): How far from open price to set center strike (e.g., 2 for OPEN + $2)
-2. Starting Capital: Your initial trading capital
-
-OUTPUT:
-- Trading statistics (win rate, total profit, best/worst days, streaks)
-- Capital analysis (starting, ending, percentage return)
-- Capital depletion warning if applicable
-- CSV file with all daily trades
-- First 20 and last 20 trading days with capital tracking
-
-DATA SOURCE:
-- Fetches real historical SPY data from Polygon.io API
-- Date range: 2024-06-01 to 2026-06-01 (2 years of trading)
-"""
 import requests
 from datetime import datetime
 import csv
@@ -38,30 +6,48 @@ print("SPY IRON BUTTERFLY BACKTEST")
 print("="*60)
 
 API_KEY = "kFOG0Gl6TUrhzWX1NKMekuNeKfXJ0KBL"
-START_DATE = "2024-06-01"
+START_DATE = "2019-06-01"
 END_DATE = "2026-06-01"
 
 # Get user input
 print("\nEnter backtest parameters:")
 center_offset = float(input("Center Strike Offset (e.g., 2 for OPEN + $2): "))
 starting_capital = float(input("Starting Capital ($): "))
+show_daily_details = input("Show daily gain/loss details? (yes/no): ").strip().lower() == "yes"
 
 print(f"\nBacktest Settings:")
 print(f"Center Strike: OPEN + ${center_offset:.2f}")
 print(f"Starting Capital: ${starting_capital:,.2f}")
-print(f"Date Range: {START_DATE} to {END_DATE}")
+print(f"Date Range: {START_DATE} to {END_DATE} (7 YEARS)")
 print("="*60)
 
-# Download SPY data from API
-print("\nDownloading SPY data...")
-url = f"https://api.polygon.io/v2/aggs/ticker/SPY/range/1/day/{START_DATE}/{END_DATE}"
-response = requests.get(url, params={"adjusted": "true", "sort": "asc", "limit": 50000, "apiKey": API_KEY})
+# Download SPY data from API (split into chunks to avoid limit)
+print("\nDownloading SPY data (7 years in chunks)...")
 
-print(f"HTTP Status: {response.status_code}")
+# Split into multiple date ranges
+date_ranges = [
+    ("2019-06-01", "2020-12-31"),
+    ("2021-01-01", "2022-12-31"),
+    ("2023-01-01", "2024-12-31"),
+    ("2025-01-01", "2026-06-01")
+]
 
-data = response.json()
-rows = data.get("results", [])
-print(f"Rows returned: {len(rows)}")
+rows = []
+
+for start, end in date_ranges:
+    print(f"Downloading {start} to {end}...")
+    url = f"https://api.polygon.io/v2/aggs/ticker/SPY/range/1/day/{start}/{end}"
+    response = requests.get(url, params={"adjusted": "true", "sort": "asc", "limit": 50000, "apiKey": API_KEY})
+    
+    print(f"HTTP Status: {response.status_code}")
+    
+    data = response.json()
+    chunk_rows = data.get("results", [])
+    print(f"Rows returned: {len(chunk_rows)}")
+    
+    rows.extend(chunk_rows)
+
+print(f"\nTotal rows downloaded: {len(rows)}")
 
 if len(rows) == 0:
     print("No data returned. Check your date range and API key.")
@@ -121,6 +107,16 @@ for row in rows:
         'capital': current_capital
     })
 
+# Print daily details if requested (ONLY DATE AND P&L)
+if show_daily_details:
+    print("\n" + "="*50)
+    print("DAILY GAIN/LOSS (ALL DAYS)")
+    print("="*50)
+    for i, row in enumerate(results, 1):
+        status = "WIN" if row['profit_loss'] > 0 else "LOSS" if row['profit_loss'] < 0 else "EVEN"
+        print(f"{row['date']} | ${row['profit_loss']:+.2f} | {status}")
+    print("="*50)
+
 # Calculate streaks
 winning_streak = 0
 losing_streak = 0
@@ -151,7 +147,7 @@ ending_capital = starting_capital + total_profit
 percentage_return = (total_profit / starting_capital * 100) if starting_capital > 0 else 0
 
 # Export to CSV
-csv_filename = f"spy_iron_butterfly_open_plus_{center_offset}_results.csv"
+csv_filename = f"spy_iron_butterfly_open_plus_{center_offset}_7year_results.csv"
 with open(csv_filename, 'w', newline='') as f:
     writer = csv.writer(f)
     writer.writerow(['date', 'open', 'close', 'center_strike', 'distance', 'profit_loss', 'capital'])
@@ -160,7 +156,7 @@ with open(csv_filename, 'w', newline='') as f:
 
 # Print summary statistics
 print("\n" + "="*60)
-print("IRON BUTTERFLY BACKTEST RESULTS")
+print("IRON BUTTERFLY BACKTEST RESULTS (7 YEARS)")
 print("="*60)
 print(f"Total Trading Days: {total_days}")
 print(f"Winning Days: {winning_days}")
@@ -171,8 +167,8 @@ print(f"Total Profit: ${total_profit:,.2f}")
 print(f"Average Profit Per Day: ${avg_profit:.2f}")
 print(f"Best Day: ${best_day:.2f}")
 print(f"Worst Day: ${worst_day:.2f}")
-print(f"Largest Winning Streak: {max_winning_streak} days")
-print(f"Largest Losing Streak: {max_losing_streak} days")
+print(f"Largest Winning Streak: {max_winning_streak} consecutive days of profit")
+print(f"Largest Losing Streak: {max_losing_streak} consecutive days of losses")
 print("="*60)
 
 print("\n" + "="*60)
@@ -193,7 +189,8 @@ print("\n" + "="*60)
 print("FIRST 20 TRADING DAYS")
 print("="*60)
 for i, row in enumerate(results[:20], 1):
-    print(f"{i}. {row['date']} | Open: ${row['open']:.2f} | Close: ${row['close']:.2f} | Center: ${row['center_strike']:.2f} | Distance: {row['distance']:.2f} | P&L: ${row['profit_loss']:.2f} | Capital: ${row['capital']:,.2f}")
+    status = "WIN" if row['profit_loss'] > 0 else "LOSS" if row['profit_loss'] < 0 else "EVEN"
+    print(f"{row['date']} | ${row['profit_loss']:+.2f} | {status}")
 
 # Print last 20 trades
 print("\n" + "="*60)
@@ -201,7 +198,8 @@ print("LAST 20 TRADING DAYS")
 print("="*60)
 start_idx = max(0, len(results) - 20)
 for i, row in enumerate(results[start_idx:], start_idx + 1):
-    print(f"{i}. {row['date']} | Open: ${row['open']:.2f} | Close: ${row['close']:.2f} | Center: ${row['center_strike']:.2f} | Distance: {row['distance']:.2f} | P&L: ${row['profit_loss']:.2f} | Capital: ${row['capital']:,.2f}")
+    status = "WIN" if row['profit_loss'] > 0 else "LOSS" if row['profit_loss'] < 0 else "EVEN"
+    print(f"{row['date']} | ${row['profit_loss']:+.2f} | {status}")
 
 print("\n" + "="*60)
 print(f"Results exported to: {csv_filename}")

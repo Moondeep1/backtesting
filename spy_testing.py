@@ -181,7 +181,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
     
     tool = SPYBacktestTool(
-        api_key=args.api_key,
+        api_key="kFOG0Gl6TUrhzWX1NKMekuNeKfXJ0KBL",
         capital=args.capital,
         target_gain=args.target_gain,
         start_date=args.start_date,
